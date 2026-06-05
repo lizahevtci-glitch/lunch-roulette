@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lunch Roulette</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #667eea;
+            padding: 20px;
+        }
+        .box {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 10px;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+        }
+        .green { background: #d4edda; padding: 10px; border-radius: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h1>🍽️ Lunch Roulette</h1>
+
+
+    <button id="randomBtn">🎲 Випадкова страва</button>
+    <div id="randomDiv"></div>
+
+    <hr>
+
+
+    <div id="list"></div>
+
+    <hr>
+
+
+    <h3>Нова страва</h3>
+    <input type="text" id="name" placeholder="Назва">
+    <input type="number" id="price" placeholder="Ціна">
+    <button id="addBtn">➕ Додати</button>
+    <div id="msg"></div>
+</div>
+
+<script>
+    const API = 'http://localhost:8000/api/v1';
+
+    async function load() {
+        let res = await fetch(API + '/meals');
+        let meals = await res.json();
+        let html = '<h2>Меню</h2>';
+        for (let m of meals) {
+            html += `<div class="item">
+                <b>${m.name}</b> - ${m.price} грн
+                <button onclick="del(${m.id})">🗑️</button>
+            </div>`;
+        }
+        document.getElementById('list').innerHTML = html;
+    }
+
+    async function del(id) {
+        await fetch(API + '/meals/' + id, {method: 'DELETE'});
+        load();
+    }
+
+    document.getElementById('randomBtn').onclick = async () => {
+        let res = await fetch(API + '/random-meal');
+        let m = await res.json();
+        document.getElementById('randomDiv').innerHTML = `<div class="green">🍽️ ${m.name} - ${m.price} грн</div>`;
+    };
+
+    document.getElementById('addBtn').onclick = async () => {
+        let newMeal = {
+            name: document.getElementById('name').value,
+            category: 'main',
+            price: parseFloat(document.getElementById('price').value),
+            description: ''
+        };
+        let res = await fetch(API + '/meals', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(newMeal)
+        });
+        if (res.ok) {
+            document.getElementById('msg').innerHTML = '✅ Додано!';
+            load();
+        } else {
+            document.getElementById('msg').innerHTML = '❌ Помилка';
+        }
+        setTimeout(() => document.getElementById('msg').innerHTML = '', 2000);
+    };
+
+    load();
+</script>
+</body>
+</html>
